@@ -1,0 +1,107 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+# Load dataset
+df = sns.load_dataset('titanic')
+
+# Display basic info
+print(df.head())  # First 5 rows
+print("\nDataset shape:", df.shape)  # e.g., (891, 15)
+print("\nColumns:", df.columns.tolist())
+print("\nMissing values:\n", df.isnull().sum())  # Age has 177 missing, embarked 2, etc.
+print("\nSummary stats:\n", df.describe())  # Numerical features
+
+# Visualize survival distribution
+sns.countplot(x='survived', data=df)
+plt.title('Survival Count (0 = No, 1 = Yes)')
+plt.show()
+
+# Explore correlations (e.g., class vs survival)
+sns.barplot(x='pclass', y='survived', data=df)
+plt.title('Survival Rate by Class')
+plt.show()
+
+# More EDA: Age distribution by survival
+sns.histplot(data=df, x='age', hue='survived', kde=True)
+plt.title('Age Distribution by Survival')
+plt.show()
+# Select features and target
+features = ['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'embarked']
+target = 'survived'
+
+X = df[features]
+y = df[target]
+
+# Define numerical and categorical features
+numerical_features = ['age', 'sibsp', 'parch', 'fare']
+categorical_features = ['pclass', 'sex', 'embarked']  # Treat pclass as categorical
+
+# Preprocessing pipelines
+numerical_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median'))  # Fill missing age/fare with median
+])
+
+categorical_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='most_frequent')),  # Fill missing embarked
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))
+])
+
+# Combine transformers
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numerical_transformer, numerical_features),
+        ('cat', categorical_transformer, categorical_features)
+    ])
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+# Full model pipeline
+model = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
+])
+
+# Train
+model.fit(X_train, y_train)
+# Predict on test set
+y_pred = model.predict(X_test)
+
+# Metrics
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\nTest Accuracy: {accuracy:.4f}")  # e.g., 0.8156
+
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+# Confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
+# Get feature names after one-hot encoding
+feature_names = (numerical_features + 
+                 model.named_steps['preprocessor'].named_transformers_['cat']
+                 .named_steps['onehot'].get_feature_names_out(categorical_features).tolist())
+
+# Importances
+importances = model.named_steps['classifier'].feature_importances_
+feature_importance = pd.Series(importances, index=feature_names).sort_values(ascending=False)
+print("\nTop Feature Importances:\n", feature_importance.head(10))
+
+# Plot
+feature_importance.head(10).plot(kind='bar')
+plt.title('Top 10 Feature Importances')
+plt.show()
+# Example: Predict for a 3rd class male, age 30, no family, fare 10, embarked S
+sample = pd.DataFrame({
+    'pclass': [3], 'sex': ['male'], 'age': [30], 'sibsp': [0], 'parch': [0], 'fare': [10], 'embarked': ['S']
+})
+prediction = model.predict(sample)
+print("\nSample Prediction (1 = Survived):", prediction[0])
