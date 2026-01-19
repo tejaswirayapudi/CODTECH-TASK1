@@ -11,9 +11,12 @@ DOMAIN : Data Science
 
 
 Task 1 Overview: Titanic Survival Prediction
+
 Objective
 
 The primary goal of this task was to develop a machine learning model to predict whether a passenger survived the Titanic disaster based on available passenger data. This binary classification problem aimed to explore patterns in survival rates influenced by factors such as age, gender, ticket class, and fare, while demonstrating core data science skills in preprocessing, modeling, and evaluation.
+
+
 Key Activities
 
 •  Data Exploration and Analysis (EDA): Loaded the Titanic dataset using Seaborn, examined structure (head, shape, columns), identified missing values (e.g., age, embarked), and visualized survival distributions and correlations (e.g., survival by gender and class).
@@ -21,6 +24,7 @@ Key Activities
 •  Model Building and Training: Implemented a Random Forest Classifier within a scikit-learn Pipeline for seamless preprocessing and modeling, with train-test split (stratified for balance).
 •  Model Evaluation: Calculated accuracy (~81-83%), generated classification report (precision, recall, F1-score), visualized confusion matrix, and analyzed feature importances (highlighting sex, fare, and age as top predictors).
 •  Insights and Validation: Interpreted results aligning with historical facts (e.g., higher survival for women and first-class passengers) and tested predictions on sample data.
+
 
 Technologies Used
 
